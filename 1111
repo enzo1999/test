@@ -1,0 +1,39 @@
+XML外部实体注入（XXE）
+问题概述
+程序在处理用户可控的XML文档或XML字符串时，使用的XML解析器默认都是支持外部实体引用的。用户可以通过在XML中构造外部实体引用，读取服务器本地文件、在服务器本地执行命令。
+例如，正常用户在浏览器中提交一个注册用户的表单的时候会发送一个POST请求，内容如下：
+<?xml version="1.0" encoding="ISO-8859-1"?>  
+<users>  
+    <user>  
+        <username>gandalf</username>  
+        <password>!c3</password>  
+        <userid>0</userid> 
+        <mail>gandalf@middleearth.com</mail> 
+    </user>  
+    <user>  
+        <username>Stefan0</username>  
+        <password>w1s3c</password>  
+        <userid>500</userid> 
+        <mail>Stefan0@whysec.hmm</mail> 
+    </user>  
+</users>
+攻击者可将正常的内容修改为非正常注册内容，如下XML红色字体部分为外部实体引用的样例，XML被解析时将读取/etc/passwd的内容。
+<?xml version="1.0" encoding="ISO-8859-1"?>
+  <!DOCTYPE foo [  
+   <!ELEMENT foo ANY >
+   <!ENTITY xxe SYSTEM "file:///etc/passwd" >]><foo>&xxe;</foo>
+安全威胁
+ 服务器本地文件任意读取
+服务器被远程控制，远程命令执行
+严重级别
+高
+
+安全需求
+禁用XML外部实体（必选）
+在程序中使用任何XML解析器进行XML解析前，都需要将该解析器对XML外部实体的支持功能禁用。
+Java类库中XML解析器禁用外部实体的样例如下：
+import javax.xml.parsers.DocumentBuilderFactory;
+DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+String FEATURE = null;
+FEATURE = "http://apache.org/xml/features/disallow-doctype-decl";
+dbf.setFeature(FEATURE, true);
